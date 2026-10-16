@@ -5,7 +5,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <!-- CVE-2026-32933 (GHSA-rvv3-g6hj-g44x): staying on 14.0.0 by decision (last MIT version); mitigation via global MaxDepth -->
+    <PackageReference Include="AutoMapper" Version="14.0.0" NoWarn="NU1903" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
   </ItemGroup>
