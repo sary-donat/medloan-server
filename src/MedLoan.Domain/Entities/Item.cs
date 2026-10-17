@@ -13,5 +13,6 @@ public class Item : BaseEntity
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
     public ICollection<ItemCopy> Copies { get; set; } = new List<ItemCopy>();
+    public ICollection<Tag> Tags { get; set; } = new List<Tag>();
     public DateTime CreatedAt { get; set; }
 }

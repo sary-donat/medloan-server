@@ -94,6 +94,13 @@ public static class SeedData
 
             Copy(42, 16, "MAT-001", CopyCondition.New),
             Copy(43, 16, "MAT-002", CopyCondition.Good));
+
+        // Added in the AddTags migration. The item-tag links are seeded in ItemConfiguration (UsingEntity).
+        modelBuilder.Entity<Tag>().HasData(
+            new Tag { Id = 1, Name = "מתקפל" },
+            new Tag { Id = 2, Name = "דורש חשמל" },
+            new Tag { Id = 3, Name = "מידת ילדים" },
+            new Tag { Id = 4, Name = "נייד" });
     }
 
     private static Item Item(int id, int categoryId, string name, string description, int maxLoanDays, decimal? deposit) => new()

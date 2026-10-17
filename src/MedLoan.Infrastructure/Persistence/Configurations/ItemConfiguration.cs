@@ -16,5 +16,20 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
             .WithMany(c => c.Items)
             .HasForeignKey(i => i.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Many-to-many. Seed: 1 wheelchair (foldable, portable), 3 walker (foldable), 5 crutches (portable, child size),
+        // 7 oxygen concentrator (needs power), 8 nebulizer (needs power, portable), 11 blood pressure monitor (portable).
+        builder.HasMany(i => i.Tags)
+            .WithMany(t => t.Items)
+            .UsingEntity(j => j.ToTable("ItemTags").HasData(
+                new { ItemsId = 1, TagsId = 1 },
+                new { ItemsId = 1, TagsId = 4 },
+                new { ItemsId = 3, TagsId = 1 },
+                new { ItemsId = 5, TagsId = 4 },
+                new { ItemsId = 5, TagsId = 3 },
+                new { ItemsId = 7, TagsId = 2 },
+                new { ItemsId = 8, TagsId = 2 },
+                new { ItemsId = 8, TagsId = 4 },
+                new { ItemsId = 11, TagsId = 4 }));
     }
 }

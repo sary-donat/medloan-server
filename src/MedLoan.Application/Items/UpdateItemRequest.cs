@@ -23,4 +23,7 @@ public sealed record UpdateItemRequest
 
     [Range(1, int.MaxValue)]
     public int CategoryId { get; init; }
+
+    // Duplicates are counted once. On PUT the list replaces all of the item's tags; empty or missing removes them.
+    public int[]? TagIds { get; init; }
 }

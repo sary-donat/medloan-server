@@ -6,6 +6,7 @@ using MedLoan.Application.Copies;
 using MedLoan.Application.Items;
 using MedLoan.Application.Loans;
 using MedLoan.Application.Members;
+using MedLoan.Application.Tags;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MedLoan.Application;
@@ -27,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IMemberService, MemberService>();
         services.AddScoped<ILoanService, LoanService>();
+        services.AddScoped<ITagService, TagService>();
 
         return services;
     }

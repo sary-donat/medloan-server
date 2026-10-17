@@ -22,6 +22,68 @@ namespace MedLoan.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ItemTag", b =>
+                {
+                    b.Property<int>("ItemsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ItemsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("ItemTags", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            ItemsId = 1,
+                            TagsId = 1
+                        },
+                        new
+                        {
+                            ItemsId = 1,
+                            TagsId = 4
+                        },
+                        new
+                        {
+                            ItemsId = 3,
+                            TagsId = 1
+                        },
+                        new
+                        {
+                            ItemsId = 5,
+                            TagsId = 4
+                        },
+                        new
+                        {
+                            ItemsId = 5,
+                            TagsId = 3
+                        },
+                        new
+                        {
+                            ItemsId = 7,
+                            TagsId = 2
+                        },
+                        new
+                        {
+                            ItemsId = 8,
+                            TagsId = 2
+                        },
+                        new
+                        {
+                            ItemsId = 8,
+                            TagsId = 4
+                        },
+                        new
+                        {
+                            ItemsId = 11,
+                            TagsId = 4
+                        });
+                });
+
             modelBuilder.Entity("MedLoan.Domain.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -796,6 +858,64 @@ namespace MedLoan.Infrastructure.Persistence.Migrations
                     b.ToTable("Members");
                 });
 
+            modelBuilder.Entity("MedLoan.Domain.Entities.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Tags");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "מתקפל"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "דורש חשמל"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "מידת ילדים"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "נייד"
+                        });
+                });
+
+            modelBuilder.Entity("ItemTag", b =>
+                {
+                    b.HasOne("MedLoan.Domain.Entities.Item", null)
+                        .WithMany()
+                        .HasForeignKey("ItemsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MedLoan.Domain.Entities.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MedLoan.Domain.Entities.Item", b =>
                 {
                     b.HasOne("MedLoan.Domain.Entities.Category", "Category")
@@ -826,13 +946,15 @@ namespace MedLoan.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MedLoan.Domain.Entities.Member", null)
+                    b.HasOne("MedLoan.Domain.Entities.Member", "Member")
                         .WithMany("Loans")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("ItemCopy");
+
+                    b.Navigation("Member");
                 });
 
             modelBuilder.Entity("MedLoan.Domain.Entities.Category", b =>

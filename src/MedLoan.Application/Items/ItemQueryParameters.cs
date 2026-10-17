@@ -8,6 +8,7 @@ public sealed record ItemQueryParameters
     public int Page { get; init; } = 1;
 
     public int? CategoryId { get; init; }
+    public int? TagId { get; init; }
     public string? Search { get; init; }
     public bool AvailableOnly { get; init; }
     public ItemSortBy SortBy { get; init; } = ItemSortBy.Name;

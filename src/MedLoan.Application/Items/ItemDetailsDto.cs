@@ -1,4 +1,5 @@
 using MedLoan.Application.Copies;
+using MedLoan.Application.Tags;
 
 namespace MedLoan.Application.Items;
 
@@ -14,4 +15,5 @@ public sealed record ItemDetailsDto(
     string CategoryName,
     DateTime CreatedAt,
     int AvailableCopies,
-    IReadOnlyList<CopyDto> Copies);
+    IReadOnlyList<CopyDto> Copies,
+    IReadOnlyList<TagDto> Tags);

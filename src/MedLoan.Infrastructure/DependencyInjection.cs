@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<ILoanRepository, LoanRepository>();
         services.AddScoped<IMemberRepository, MemberRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ITagRepository, TagRepository>();
 
         // A missing or short Jwt:Key fails at startup, with a clear message.
         services.AddOptions<JwtOptions>()

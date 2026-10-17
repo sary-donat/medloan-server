@@ -19,6 +19,9 @@ public class ItemRepository(AppDbContext db) : IItemRepository
         if (query.CategoryId is int categoryId)
             items = items.Where(i => i.CategoryId == categoryId);
 
+        if (query.TagId is int tagId)
+            items = items.Where(i => i.Tags.Any(t => t.Id == tagId));
+
         if (query.AvailableOnly)
             items = items.Where(i => i.Copies.Any(c => c.Status == CopyStatus.Available));
 
@@ -54,12 +57,14 @@ public class ItemRepository(AppDbContext db) : IItemRepository
         _db.Items
             .AsNoTracking()
             .Include(i => i.Category)
+            .Include(i => i.Tags)
             .Include(i => i.Copies)
             .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id, ct);
 
+    // Includes Tags: PUT replaces the item's tag list.
     public Task<Item?> GetByIdForUpdateAsync(int id, CancellationToken ct) =>
-        _db.Items.FirstOrDefaultAsync(i => i.Id == id, ct);
+        _db.Items.Include(i => i.Tags).FirstOrDefaultAsync(i => i.Id == id, ct);
 
     public Task<bool> ExistsAsync(int id, CancellationToken ct) =>
         _db.Items.AnyAsync(i => i.Id == id, ct);
