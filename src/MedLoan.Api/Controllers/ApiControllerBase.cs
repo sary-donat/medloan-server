@@ -19,6 +19,10 @@ public abstract class ApiControllerBase : ControllerBase
             ? CreatedAtAction(actionName, routeValues(result.Value!), result.Value)
             : ToProblem(result.Error, result.Message);
 
+    // POST whose Location is a fixed path, not an action in this controller.
+    protected IActionResult ToCreatedResult<T>(Result<T> result, string location) =>
+        result.IsSuccess ? Created(location, result.Value) : ToProblem(result.Error, result.Message);
+
     private ObjectResult ToProblem(ErrorType error, string? message)
     {
         var status = error switch

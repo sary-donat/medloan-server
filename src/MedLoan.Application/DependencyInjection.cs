@@ -1,8 +1,10 @@
 using AutoMapper;
 using AutoMapper.Internal;
+using MedLoan.Application.Auth;
 using MedLoan.Application.Categories;
 using MedLoan.Application.Copies;
 using MedLoan.Application.Items;
+using MedLoan.Application.Members;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MedLoan.Application;
@@ -21,6 +23,8 @@ public static class DependencyInjection
         services.AddScoped<IItemService, ItemService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ICopyService, CopyService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IMemberService, MemberService>();
 
         return services;
     }
