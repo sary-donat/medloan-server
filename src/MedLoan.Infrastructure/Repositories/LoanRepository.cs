@@ -14,6 +14,28 @@ public class LoanRepository(AppDbContext db) : ILoanRepository
 
     public void Add(Loan loan) => _db.Loans.Add(loan);
 
+    public Task<Loan?> GetByIdAsync(int id, CancellationToken ct) =>
+        _db.Loans
+            .AsNoTracking()
+            .Include(l => l.ItemCopy).ThenInclude(c => c.Item)
+            .Include(l => l.Member)
+            .FirstOrDefaultAsync(l => l.Id == id, ct);
+
+    // Tracked, with ItemCopy: the return updates the copy under its concurrency token.
+    public Task<Loan?> GetByIdForUpdateAsync(int id, CancellationToken ct) =>
+        _db.Loans.Include(l => l.ItemCopy).FirstOrDefaultAsync(l => l.Id == id, ct);
+
+    // Not paged: a member has few loans. Newest first; ThenBy(Id) keeps ties in a stable order.
+    public async Task<IReadOnlyList<Loan>> GetByMemberAsync(int memberId, CancellationToken ct) =>
+        await _db.Loans
+            .AsNoTracking()
+            .Include(l => l.ItemCopy).ThenInclude(c => c.Item)
+            .Include(l => l.Member)
+            .Where(l => l.MemberId == memberId)
+            .OrderByDescending(l => l.LoanedAt)
+            .ThenBy(l => l.Id)
+            .ToListAsync(ct);
+
     public async Task<PagedResult<Loan>> GetPagedAsync(LoanQueryParameters query, DateTime now, CancellationToken ct)
     {
         var loans = _db.Loans.AsNoTracking();
