@@ -1,4 +1,5 @@
 using MedLoan.Domain.Entities;
+using MedLoan.Infrastructure.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedLoan.Infrastructure.Persistence;
@@ -14,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        SeedData.Apply(modelBuilder);
     }
 
     // SaveChangesAsync(CancellationToken) delegates to this overload, so both paths renew the token.
