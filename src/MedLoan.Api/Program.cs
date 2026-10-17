@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MedLoan.Api.Middleware;
 using MedLoan.Application;
 using MedLoan.Infrastructure;
@@ -14,7 +15,8 @@ try
     builder.Host.UseNLog();
 
     builder.Services.AddApplication().AddInfrastructure(builder.Configuration);
-    builder.Services.AddControllers();
+    builder.Services.AddControllers()
+        .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
     builder.Services.AddOpenApi();
     builder.Services.AddProblemDetails();
 

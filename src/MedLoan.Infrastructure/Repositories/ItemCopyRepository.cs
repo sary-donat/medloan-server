@@ -13,6 +13,13 @@ public class ItemCopyRepository(AppDbContext db) : IItemCopyRepository
     public Task<ItemCopy?> GetByIdForUpdateAsync(int id, CancellationToken ct) =>
         _db.ItemCopies.Include(c => c.Item).FirstOrDefaultAsync(c => c.Id == id, ct);
 
+    public async Task<IReadOnlyList<ItemCopy>> GetByItemIdAsync(int itemId, CancellationToken ct) =>
+        await _db.ItemCopies.AsNoTracking().Where(c => c.ItemId == itemId).OrderBy(c => c.Id).ToListAsync(ct);
+
     public Task<bool> SerialNumberExistsAsync(string serialNumber, CancellationToken ct) =>
         _db.ItemCopies.AnyAsync(c => c.SerialNumber == serialNumber, ct);
+
+    public void Add(ItemCopy copy) => _db.ItemCopies.Add(copy);
+
+    public void Remove(ItemCopy copy) => _db.ItemCopies.Remove(copy);
 }

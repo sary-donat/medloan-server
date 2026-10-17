@@ -58,8 +58,18 @@ public class ItemRepository(AppDbContext db) : IItemRepository
             .AsSplitQuery()
             .FirstOrDefaultAsync(i => i.Id == id, ct);
 
+    public Task<Item?> GetByIdForUpdateAsync(int id, CancellationToken ct) =>
+        _db.Items.FirstOrDefaultAsync(i => i.Id == id, ct);
+
+    public Task<bool> ExistsAsync(int id, CancellationToken ct) =>
+        _db.Items.AnyAsync(i => i.Id == id, ct);
+
     public Task<bool> ExistsInCategoryAsync(int categoryId, CancellationToken ct) =>
         _db.Items.AnyAsync(i => i.CategoryId == categoryId, ct);
+
+    public void Add(Item item) => _db.Items.Add(item);
+
+    public void Remove(Item item) => _db.Items.Remove(item);
 
     // ThenBy(Id) keeps the order stable between pages when the sort key has ties.
     private static IOrderedQueryable<Item> ApplySort(IQueryable<Item> items, ItemSortBy sortBy, SortDirection sortDir)
