@@ -19,6 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="nlog.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MedLoan.Application\MedLoan.Application.csproj" />
     <ProjectReference Include="..\MedLoan.Infrastructure\MedLoan.Infrastructure.csproj" />
   </ItemGroup>

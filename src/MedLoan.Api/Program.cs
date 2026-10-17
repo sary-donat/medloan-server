@@ -2,39 +2,57 @@ using MedLoan.Api.Middleware;
 using MedLoan.Application;
 using MedLoan.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
+using NLog;
+using NLog.Web;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddApplication().AddInfrastructure(builder.Configuration);
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
-builder.Services.AddProblemDetails();
-
-// Without this, UseForwardedHeaders does nothing and the Render proxy is not trusted.
-builder.Services.Configure<ForwardedHeadersOptions>(o =>
+var logger = LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
+try
 {
-    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    o.KnownIPNetworks.Clear();
-    o.KnownProxies.Clear();
-});
+    var builder = WebApplication.CreateBuilder(args);
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-builder.Services.AddCors(o => o.AddPolicy("client", p => p
-    .WithOrigins(allowedOrigins)
-    .AllowAnyHeader()
-    .AllowAnyMethod()));
+    builder.Logging.ClearProviders();
+    builder.Host.UseNLog();
 
-var app = builder.Build();
+    builder.Services.AddApplication().AddInfrastructure(builder.Configuration);
+    builder.Services.AddControllers();
+    builder.Services.AddOpenApi();
+    builder.Services.AddProblemDetails();
 
-app.UseForwardedHeaders();
-app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseMiddleware<CorrelationIdMiddleware>();
-app.UseStatusCodePages();
-app.MapOpenApi().AllowAnonymous();
-app.UseSwaggerUI(o => o.SwaggerEndpoint("/openapi/v1.json", "MedLoan API"));
-app.UseCors("client");
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+    // Without this, UseForwardedHeaders does nothing and the Render proxy is not trusted.
+    builder.Services.Configure<ForwardedHeadersOptions>(o =>
+    {
+        o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        o.KnownIPNetworks.Clear();
+        o.KnownProxies.Clear();
+    });
 
-await app.RunAsync();
+    var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+    builder.Services.AddCors(o => o.AddPolicy("client", p => p
+        .WithOrigins(allowedOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod()));
+
+    var app = builder.Build();
+
+    app.UseForwardedHeaders();
+    app.UseMiddleware<ExceptionHandlingMiddleware>();
+    app.UseMiddleware<CorrelationIdMiddleware>();
+    app.UseStatusCodePages();
+    app.MapOpenApi().AllowAnonymous();
+    app.UseSwaggerUI(o => o.SwaggerEndpoint("/openapi/v1.json", "MedLoan API"));
+    app.UseCors("client");
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.MapControllers();
+
+    await app.RunAsync();
+}
+catch (Exception ex) when (ex is not HostAbortedException)   // dotnet ef stops the host with this exception — not an error
+{
+    logger.Error(ex, "Application stopped because of an exception during startup");
+    throw;
+}
+finally
+{
+    LogManager.Shutdown();
+}
