@@ -11,8 +11,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException(
+        // An empty value (e.g. an env var set without a value) is treated as missing, so startup fails here
+        // and not on the first DB request.
+        var connectionString = configuration.GetConnectionString("Default");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException(
                 "Connection string 'ConnectionStrings:Default' is missing. " +
                 "Set it with dotnet user-secrets (development) or the ConnectionStrings__Default environment variable.");
 
