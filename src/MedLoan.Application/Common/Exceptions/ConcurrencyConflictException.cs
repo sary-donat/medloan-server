@@ -4,9 +4,11 @@ public class ConcurrencyConflictException : Exception
 {
     public ConcurrencyConflictException()
     {
+
     }
 
     public ConcurrencyConflictException(string message, Exception inner) : base(message, inner)
     {
+
     }
 }

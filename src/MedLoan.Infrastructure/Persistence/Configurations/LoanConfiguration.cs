@@ -15,8 +15,7 @@ public class LoanConfiguration : IEntityTypeConfiguration<Loan>
             .HasForeignKey(l => l.ItemCopyId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Loan has no Member navigation; the relationship is configured from the FK.
-        builder.HasOne<Member>()
+        builder.HasOne(l => l.Member)
             .WithMany(m => m.Loans)
             .HasForeignKey(l => l.MemberId)
             .OnDelete(DeleteBehavior.Restrict);

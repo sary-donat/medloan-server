@@ -8,6 +8,7 @@ public class Loan : BaseEntity
     public int ItemCopyId { get; set; }
     public ItemCopy ItemCopy { get; set; } = null!;
     public int MemberId { get; set; }
+    public Member Member { get; set; } = null!;
     public DateTime LoanedAt { get; set; }
     public DateTime DueAt { get; set; }
     public DateTime? ReturnedAt { get; set; }

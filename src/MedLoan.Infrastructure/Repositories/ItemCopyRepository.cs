@@ -12,4 +12,7 @@ public class ItemCopyRepository(AppDbContext db) : IItemCopyRepository
     // Tracked on purpose: the copy is modified and saved with its concurrency token.
     public Task<ItemCopy?> GetByIdForUpdateAsync(int id, CancellationToken ct) =>
         _db.ItemCopies.Include(c => c.Item).FirstOrDefaultAsync(c => c.Id == id, ct);
+
+    public Task<bool> SerialNumberExistsAsync(string serialNumber, CancellationToken ct) =>
+        _db.ItemCopies.AnyAsync(c => c.SerialNumber == serialNumber, ct);
 }
