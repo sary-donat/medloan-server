@@ -122,7 +122,9 @@ openssl rand -base64 64
 או ב-PowerShell:
 
 ```powershell
-[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(64))
+$bytes = New-Object byte[] 64
+[System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+[Convert]::ToBase64String($bytes)
 ```
 
 ### הרצה
@@ -150,7 +152,7 @@ dotnet run --project src/MedLoan.Api
 | Member | member1@medloan.local | Member123! |
 | Member | member2@medloan.local | Member123! |
 
-לפריט "מרכז חמצן" יש עותק יחיד. בעזרתו אפשר להדגים 409: מתחברים כ-member1 וכ-member2 בשני דפדפנים, ושניהם לוחצים "השאל".
+לפריט "כיסא גלגלים מתקפל" יש עותק יחיד (`WCF-001`). בעזרתו אפשר להדגים 409: מתחברים כ-member1 וכ-member2 בשני דפדפנים, ושניהם לוחצים "השאל".
 
 ## הרצת בדיקות
 
@@ -207,7 +209,7 @@ xUnit v3 מול SQLite in-memory, עם `AppDbContext` אמיתי.
 
 | שם | ערך |
 |---|---|
-| `ConnectionStrings__Default` | בפורמט Npgsql (ראו למטה): `Host=<host>;Port=5432;Database=<database>;Username=<user>;Password=<password>;SSL Mode=Require;Trust Server Certificate=true` |
+| `ConnectionStrings__Default` | בפורמט Npgsql (ראו למטה): `Host=<host>;Port=5432;Database=<database>;Username=<user>;Password=<password>;SSL Mode=Prefer;Trust Server Certificate=true` |
 | `Jwt__Key` | מחרוזת אקראית ארוכה, שונה מזו של הפיתוח |
 | `Cors__AllowedOrigins__0` | כתובת ה-Static Site של הלקוח, למשל `https://<client>.onrender.com` (בלי `/` בסוף) |
 | `ASPNETCORE_ENVIRONMENT` | `Production` |
@@ -226,7 +228,7 @@ postgresql://<user>:<password>@<host>/<database>
 מעתיקים כל חלק לשדה המתאים:
 
 ```
-Host=<host>;Port=5432;Database=<database>;Username=<user>;Password=<password>;SSL Mode=Require;Trust Server Certificate=true
+Host=<host>;Port=5432;Database=<database>;Username=<user>;Password=<password>;SSL Mode=Prefer;Trust Server Certificate=true
 ```
 
 - ב-Internal URL אין פורט, ולכן משתמשים בפורט ברירת המחדל, `5432`.
