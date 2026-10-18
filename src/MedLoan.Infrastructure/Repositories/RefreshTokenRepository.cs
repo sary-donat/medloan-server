@@ -20,4 +20,6 @@ public class RefreshTokenRepository(AppDbContext db) : IRefreshTokenRepository
             .ToListAsync(ct);
 
     public void Add(RefreshToken token) => _db.RefreshTokens.Add(token);
+
+    public void Remove(RefreshToken token) => _db.RefreshTokens.Remove(token);
 }

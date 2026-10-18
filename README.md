@@ -153,7 +153,8 @@ dotnet run --project src/MedLoan.Api
 
 - `AuthResponse` מכיל `token` (access token, ‏15 דקות), `expiresAt`, `refreshToken` (‏7 ימים), `refreshTokenExpiresAt`, `memberId`, `fullName` ו-`role`.
 - גוף הבקשה של refresh ושל logout: `{ "refreshToken": "..." }`.
-- **rotation:** כל refresh מבטל את ה-refresh token הישן ומחזיר זוג חדש. שימוש חוזר ב-token שכבר בוטל מבטל את כל ה-tokens הפעילים של החבר, ומחזיר 401.
+- **rotation:** כל refresh מבטל את ה-refresh token הישן ומחזיר זוג חדש. שימוש חוזר ב-token שבוטל ב-rotation מבטל את כל ה-tokens הפעילים של החבר, ומחזיר 401.
+- **logout** מוחק את ה-refresh token מה-DB. refresh אחרי logout מחזיר 401, בלי לבטל את החיבורים האחרים של החבר.
 - ב-DB נשמר רק hash (SHA-256) של ה-refresh token. tokens לא נכתבים ללוג.
 - חבר שנחסם מקבל 401 כבר בבקשה הבאה, גם עם access token תקף, כי `OnTokenValidated` בודק `IsActive` ב-DB.
 
@@ -183,7 +184,7 @@ xUnit v3 ו-Moq. בודק את הלוגיקה העסקית ב-Services, עם moc
 
 - `LoanServiceTests`: השאלה של עותק זמין; דחייה של עותק מושאל; 409 כש-`SaveChangesAsync` זורק `ConcurrencyConflictException`; עותק שלא קיים (404); חבר שהגיע למגבלת 3 ההשאלות (400); החזרה על ידי הבעלים ועל ידי מנהל, ו-403 לחבר אחר; 409 בהחזרה כפולה ובהתנגשות בהחזרה.
 - `AuthServiceTests`: הרשמה עם תפקיד Member; email שכבר קיים (409); סיסמה שגויה וחבר חסום (401); התחברות תקינה שמחזירה token, וגם refresh token שנשמר רק כ-hash.
-  refresh: token תקין מחזיר זוג חדש ומבטל את הישן; token שכבר בוטל (שימוש חוזר) מבטל את כל ה-tokens הפעילים של החבר ומחזיר 401; token שפג וחבר לא פעיל מחזירים 401. logout מבטל את ה-refresh token.
+  refresh: token תקין מחזיר זוג חדש ומבטל את הישן; token שכבר בוטל (שימוש חוזר) מבטל את כל ה-tokens הפעילים של החבר ומחזיר 401; token שפג וחבר לא פעיל מחזירים 401. logout מוחק את ה-refresh token, ו-refresh אחריו מחזיר 401 בלי לבטל חיבורים אחרים.
 - `ItemCopyTests`: `CheckOut` על עותק מושאל זורק `DomainException`.
 - `MappingTests`: `AssertConfigurationIsValid()` על הגדרות ה-AutoMapper.
 
@@ -198,12 +199,13 @@ xUnit v3 מול SQLite in-memory, עם `AppDbContext` אמיתי.
 
 - **access token קצר (15 דקות) ו-refresh token (7 ימים, עם rotation).** את ה-access token עצמו אי אפשר לבטל עד שיפוג, ולכן הוא קצר.
 - **חבר שנחסם נחסם מיד.** `OnTokenValidated` בודק `IsActive` ב-DB בכל בקשה, ו-refresh נכשל לחבר חסום.
-- **logout** מבטל את ה-refresh token בשרת. access token שכבר ניתן נשאר תקף עד 15 דקות, כי אין רשימה שחורה ל-access tokens.
+- **logout** מוחק את ה-refresh token בשרת. access token שכבר ניתן נשאר תקף עד 15 דקות, כי אין רשימה שחורה ל-access tokens.
 - **שני refresh מקבילים עם אותו token** עלולים שניהם להצליח, כי אין concurrency token על `RefreshToken`. tokens שפגו לא נמחקים אוטומטית מה-DB.
 - **מגבלת 3 ההשאלות לא מוגנת מפני בקשות בו-זמניות.** שתי השאלות של אותו חבר על שני עותקים שונים באותו רגע עלולות לעבור את הבדיקה. ה-`Version` מגן על העותק, לא על ספירת ההשאלות של החבר. פתרון אפשרי: concurrency token גם על `Member`, או טרנזקציה ברמת Serializable.
 - **AutoMapper 14.0.0.** זו הגרסה החינמית האחרונה (MIT, בלי מפתח רישיון), ולכן לא מעדכנים ל-15 ומעלה. לגרסה יש פרצת DoS ידועה (רקורסיה במבנה עמוק). ההגנה היא `MaxDepth(5)` על כל המיפויים, ב-`AddApplication()`. הסיכון נמוך ממילא, כי ממפים רק ישויות מה-DB ולא קלט מהמשתמש.
 - **סיסמאות הדמו גלויות.** הסיסמאות של משתמשי הדמו (`admin@medloan.local`, `member1@medloan.local`, `member2@medloan.local`) כתובות בקוד וב-README, ולכן הן גלויות גם בפריסה הציבורית. כל מי שיש לו את הכתובת יכול להתחבר כמנהל.
 - **בסיס הנתונים ב-Render הוא בתוכנית החינמית,** ותוקפו מוגבל. כשהתוקף פג, Render מוחק את בסיס הנתונים, אלא אם עוברים לתוכנית בתשלום.
+- **ERROR בלוג בעלייה הראשונה מול DB ריק.** EF רושם ERROR על טבלת `__EFMigrationsHistory` שעוד לא קיימת, וזו התנהגות רגילה של EF: מיד אחרי זה ה-migrations רצים והשרת עולה.
 
 ## קישורים לפריסה
 

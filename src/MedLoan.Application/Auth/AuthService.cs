@@ -127,6 +127,8 @@ public class AuthService(
     }
 
     // Always succeeds (204): the response does not reveal whether the token existed.
+    // The token is deleted, not revoked: a refresh with it afterwards is simply "not found" (401),
+    // so it does not trigger reuse detection and the member's other sessions stay logged in.
     public async Task<Result> LogoutAsync(RefreshTokenRequest request, CancellationToken ct)
     {
         var now = _time.GetUtcNow().UtcDateTime;
@@ -134,7 +136,7 @@ public class AuthService(
 
         if (stored is not null && stored.IsActive(now))
         {
-            stored.RevokedAt = now;
+            _refreshTokens.Remove(stored);
             await _unitOfWork.SaveChangesAsync(ct);
         }
 

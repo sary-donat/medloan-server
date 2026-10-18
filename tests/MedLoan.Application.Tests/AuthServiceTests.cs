@@ -211,7 +211,7 @@ public class AuthServiceTests
     }
 
     [Fact]
-    public async Task Logout_RevokesRefreshToken()
+    public async Task Logout_DeletesRefreshToken()
     {
         var old = NewStoredToken(NewMember(isActive: true));
         SetupStored(old);
@@ -219,8 +219,30 @@ public class AuthServiceTests
         var result = await _service.LogoutAsync(new RefreshTokenRequest { RefreshToken = OldRefreshToken }, Ct);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(_time.GetUtcNow().UtcDateTime, old.RevokedAt);
+        _refreshTokens.Verify(r => r.Remove(old), Times.Once);
+        Assert.Null(old.RevokedAt);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Refresh_AfterLogout_ReturnsUnauthorizedWithoutRevokingOtherSessions()
+    {
+        var member = NewMember(isActive: true);
+        var loggedOut = NewStoredToken(member);
+        var otherSession = NewStoredToken(member);
+        var removed = false;
+        _refreshTokens.Setup(r => r.GetByHashAsync("hash:" + OldRefreshToken, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => removed ? null : loggedOut);
+        _refreshTokens.Setup(r => r.Remove(loggedOut)).Callback(() => removed = true);
+
+        await _service.LogoutAsync(new RefreshTokenRequest { RefreshToken = OldRefreshToken }, Ct);
+        var result = await _service.RefreshAsync(new RefreshTokenRequest { RefreshToken = OldRefreshToken }, Ct);
+
+        Assert.Equal(ErrorType.Unauthorized, result.Error);
+        // Not treated as reuse: the member's other sessions are not looked up or revoked.
+        _refreshTokens.Verify(r => r.GetActiveByMemberAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Null(otherSession.RevokedAt);
+        _refreshTokens.Verify(r => r.Add(It.IsAny<RefreshToken>()), Times.Never);
     }
 
     private void SetupStored(RefreshToken token) =>
