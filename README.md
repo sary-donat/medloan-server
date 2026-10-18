@@ -182,7 +182,8 @@ dotnet test
 xUnit v3 ו-Moq. בודק את הלוגיקה העסקית ב-Services, עם mock ל-Repositories, ל-`IUnitOfWork`, ל-`ICurrentUser`, ל-`ITokenService` ול-`IPasswordHasher`. ה-AutoMapper אמיתי ונבנה דרך `AddApplication()`, כמו בשרת, והזמן הוא `FakeTimeProvider`.
 
 - `LoanServiceTests`: השאלה של עותק זמין; דחייה של עותק מושאל; 409 כש-`SaveChangesAsync` זורק `ConcurrencyConflictException`; עותק שלא קיים (404); חבר שהגיע למגבלת 3 ההשאלות (400); החזרה על ידי הבעלים ועל ידי מנהל, ו-403 לחבר אחר; 409 בהחזרה כפולה ובהתנגשות בהחזרה.
-- `AuthServiceTests`: הרשמה עם תפקיד Member; email שכבר קיים (409); סיסמה שגויה וחבר חסום (401); התחברות תקינה שמחזירה token.
+- `AuthServiceTests`: הרשמה עם תפקיד Member; email שכבר קיים (409); סיסמה שגויה וחבר חסום (401); התחברות תקינה שמחזירה token, וגם refresh token שנשמר רק כ-hash.
+  refresh: token תקין מחזיר זוג חדש ומבטל את הישן; token שכבר בוטל (שימוש חוזר) מבטל את כל ה-tokens הפעילים של החבר ומחזיר 401; token שפג וחבר לא פעיל מחזירים 401. logout מבטל את ה-refresh token.
 - `ItemCopyTests`: `CheckOut` על עותק מושאל זורק `DomainException`.
 - `MappingTests`: `AssertConfigurationIsValid()` על הגדרות ה-AutoMapper.
 
