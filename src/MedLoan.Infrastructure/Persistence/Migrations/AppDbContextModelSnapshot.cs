@@ -858,6 +858,41 @@ namespace MedLoan.Infrastructure.Persistence.Migrations
                     b.ToTable("Members");
                 });
 
+            modelBuilder.Entity("MedLoan.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("MedLoan.Domain.Entities.Tag", b =>
                 {
                     b.Property<int>("Id")
@@ -953,6 +988,17 @@ namespace MedLoan.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("ItemCopy");
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("MedLoan.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("MedLoan.Domain.Entities.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Member");
                 });

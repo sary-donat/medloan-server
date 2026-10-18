@@ -1,3 +1,5 @@
+using System.Buffers.Text;
+using System.Security.Cryptography;
 using System.Text;
 using MedLoan.Application.Common.Interfaces;
 using MedLoan.Domain.Entities;
@@ -39,4 +41,15 @@ public class JwtTokenService(IOptions<JwtOptions> options, TimeProvider time) : 
 
         return new JsonWebTokenHandler().CreateToken(descriptor);
     }
+
+    // 64 random bytes: not a JWT, just an opaque value. The DB keeps only its hash.
+    public string CreateRefreshToken(out DateTime expiresAt)
+    {
+        expiresAt = _time.GetUtcNow().UtcDateTime.AddDays(_options.RefreshTokenDays);
+        return Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(64));
+    }
+
+    // SHA-256 is enough here (no BCrypt): the token is random and long, so it cannot be guessed from a dictionary.
+    public string HashRefreshToken(string token) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 }

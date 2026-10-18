@@ -18,4 +18,13 @@ public class AuthController(IAuthService auth) : ApiControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct) =>
         ToActionResult(await _auth.LoginAsync(request, ct));
+
+    // Anonymous: the access token may already be expired; the refresh token itself is the credential.
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request, CancellationToken ct) =>
+        ToActionResult(await _auth.RefreshAsync(request, ct));
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request, CancellationToken ct) =>
+        ToActionResult(await _auth.LogoutAsync(request, ct));
 }

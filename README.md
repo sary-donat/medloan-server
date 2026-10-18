@@ -142,6 +142,21 @@ dotnet run --project src/MedLoan.Api
 
 הלקוח (React) נמצא ב-repo `medloan-client`, וההוראות להרצה שלו ב-README שלו. השרת מתיר CORS בפיתוח רק ל-`http://localhost:5173`, הכתובת שבה הלקוח נפתח.
 
+## אימות (JWT ו-refresh tokens)
+
+| Method | Route | הרשאה | תשובות |
+|---|---|---|---|
+| POST | `/api/auth/register` | Anonymous | 201 + `AuthResponse`, 400, 409 |
+| POST | `/api/auth/login` | Anonymous | 200 + `AuthResponse`, 400, 401 |
+| POST | `/api/auth/refresh` | Anonymous | 200 + `AuthResponse` חדש, 400, 401 |
+| POST | `/api/auth/logout` | Anonymous | 204, גם אם ה-token לא קיים |
+
+- `AuthResponse` מכיל `token` (access token, ‏15 דקות), `expiresAt`, `refreshToken` (‏7 ימים), `refreshTokenExpiresAt`, `memberId`, `fullName` ו-`role`.
+- גוף הבקשה של refresh ושל logout: `{ "refreshToken": "..." }`.
+- **rotation:** כל refresh מבטל את ה-refresh token הישן ומחזיר זוג חדש. שימוש חוזר ב-token שכבר בוטל מבטל את כל ה-tokens הפעילים של החבר, ומחזיר 401.
+- ב-DB נשמר רק hash (SHA-256) של ה-refresh token. tokens לא נכתבים ללוג.
+- חבר שנחסם מקבל 401 כבר בבקשה הבאה, גם עם access token תקף, כי `OnTokenValidated` בודק `IsActive` ב-DB.
+
 ## משתמשי דמו
 
 נוצרים ב-Seed בעליית השרת, אם אין עדיין משתמשים.
@@ -180,9 +195,10 @@ xUnit v3 מול SQLite in-memory, עם `AppDbContext` אמיתי.
 
 ## מגבלות ידועות
 
-- **אין refresh token.** תוקף ה-token הוא 60 דקות, ואחריו מתחברים מחדש.
-- **חבר שנחסם** ממשיך להחזיק token תקף עד שיפוג. ההגנה היא התוקף הקצר, והחסימה מונעת התחברות מחדש. הרחבה אפשרית: בדיקת `IsActive` ב-`OnTokenValidated`.
-- **אין logout בשרת.** JWT הוא stateless, ו-logout הוא מחיקת ה-token בלקוח.
+- **access token קצר (15 דקות) ו-refresh token (7 ימים, עם rotation).** את ה-access token עצמו אי אפשר לבטל עד שיפוג, ולכן הוא קצר.
+- **חבר שנחסם נחסם מיד.** `OnTokenValidated` בודק `IsActive` ב-DB בכל בקשה, ו-refresh נכשל לחבר חסום.
+- **logout** מבטל את ה-refresh token בשרת. access token שכבר ניתן נשאר תקף עד 15 דקות, כי אין רשימה שחורה ל-access tokens.
+- **שני refresh מקבילים עם אותו token** עלולים שניהם להצליח, כי אין concurrency token על `RefreshToken`. tokens שפגו לא נמחקים אוטומטית מה-DB.
 - **מגבלת 3 ההשאלות לא מוגנת מפני בקשות בו-זמניות.** שתי השאלות של אותו חבר על שני עותקים שונים באותו רגע עלולות לעבור את הבדיקה. ה-`Version` מגן על העותק, לא על ספירת ההשאלות של החבר. פתרון אפשרי: concurrency token גם על `Member`, או טרנזקציה ברמת Serializable.
 - **AutoMapper 14.0.0.** זו הגרסה החינמית האחרונה (MIT, בלי מפתח רישיון), ולכן לא מעדכנים ל-15 ומעלה. לגרסה יש פרצת DoS ידועה (רקורסיה במבנה עמוק). ההגנה היא `MaxDepth(5)` על כל המיפויים, ב-`AddApplication()`. הסיכון נמוך ממילא, כי ממפים רק ישויות מה-DB ולא קלט מהמשתמש.
 - **סיסמאות הדמו גלויות.** הסיסמאות של משתמשי הדמו (`admin@medloan.local`, `member1@medloan.local`, `member2@medloan.local`) כתובות בקוד וב-README, ולכן הן גלויות גם בפריסה הציבורית. כל מי שיש לו את הכתובת יכול להתחבר כמנהל.

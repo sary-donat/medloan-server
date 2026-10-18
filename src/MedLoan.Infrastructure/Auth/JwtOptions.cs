@@ -9,5 +9,6 @@ public sealed class JwtOptions
     [Required] public string Issuer { get; init; } = default!;
     [Required] public string Audience { get; init; } = default!;
     [Required, MinLength(32)] public string Key { get; init; } = default!;   // HS256 requires at least 256 bits
-    [Range(5, 1440)] public int ExpiryMinutes { get; init; } = 60;
+    [Range(5, 1440)] public int ExpiryMinutes { get; init; } = 15;
+    [Range(1, 30)] public int RefreshTokenDays { get; init; } = 7;
 }
