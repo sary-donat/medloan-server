@@ -9,6 +9,7 @@ public interface IMemberRepository
     Task<Member?> GetByEmailAsync(string email, CancellationToken ct);
     Task<Member?> GetByIdAsync(int id, CancellationToken ct);
     Task<Member?> GetByIdForUpdateAsync(int id, CancellationToken ct);
+    Task<bool> IsActiveAsync(int id, CancellationToken ct);
     Task<PagedResult<MemberDto>> GetPagedAsync(int page, CancellationToken ct);
     void Add(Member member);
 }

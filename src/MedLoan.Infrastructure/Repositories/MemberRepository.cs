@@ -20,6 +20,10 @@ public class MemberRepository(AppDbContext db) : IMemberRepository
     public Task<Member?> GetByIdForUpdateAsync(int id, CancellationToken ct) =>
         _db.Members.FirstOrDefaultAsync(m => m.Id == id, ct);
 
+    // False also for a member that was deleted or never existed.
+    public Task<bool> IsActiveAsync(int id, CancellationToken ct) =>
+        _db.Members.AsNoTracking().AnyAsync(m => m.Id == id && m.IsActive, ct);
+
     public async Task<PagedResult<MemberDto>> GetPagedAsync(int page, CancellationToken ct)
     {
         var members = _db.Members.AsNoTracking();

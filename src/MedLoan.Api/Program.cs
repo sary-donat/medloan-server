@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using NLog;
 using NLog.Web;
@@ -69,6 +70,20 @@ try
                     ctx.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>()
                        .LogWarning("JWT authentication failed: {Reason}", ctx.Exception.GetType().Name);
                     return Task.CompletedTask;
+                },
+                // Signature and lifetime already passed. A blocked member is rejected on the next request,
+                // not only when the token expires (11.13).
+                OnTokenValidated = async ctx =>
+                {
+                    var members = ctx.HttpContext.RequestServices.GetRequiredService<IMemberRepository>();
+                    var sub = ctx.Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+                    if (int.TryParse(sub, out var memberId)
+                        && await members.IsActiveAsync(memberId, ctx.HttpContext.RequestAborted))
+                        return;
+
+                    ctx.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>()
+                       .LogWarning("Inactive member {MemberId} rejected", sub);
+                    ctx.Fail("Member is not active");
                 }
             };
         });
