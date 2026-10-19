@@ -24,7 +24,9 @@ public class LoansController(ILoanService loans) : ApiControllerBase
     public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken ct) =>
         ToActionResult(await _loans.GetByIdAsync(id, ct));
 
+    // Admin only: the gemach confirms the equipment actually came back.
     [HttpPatch("{id:int}")]
+    [Authorize(Policy = Policies.AdminOnly)]
     public async Task<IActionResult> Return([FromRoute] int id, [FromBody] UpdateLoanRequest request, CancellationToken ct) =>
         ToActionResult(await _loans.ReturnAsync(id, request, ct));
 }

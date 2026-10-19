@@ -92,9 +92,7 @@ public class LoanService(
         if (loan is null)
             return Result.NotFound(NotFoundMessage);
 
-        if (!CanAccess(loan))
-            return Result.Forbidden(ForbiddenMessage);
-
+        // No ownership check: the endpoint is Admin only.
         if (loan.Status == LoanStatus.Returned)
             return Result.Conflict("ההשאלה כבר הוחזרה");
 
@@ -109,7 +107,7 @@ public class LoanService(
         catch (ConcurrencyConflictException)
         {
             _logger.LogWarning(
-                "Concurrency conflict: loan {LoanId} on copy {CopyId} was changed by another request. Member {MemberId} was rejected",
+                "Concurrency conflict: loan {LoanId} on copy {CopyId} was changed by another request. Admin {AdminId} was rejected",
                 loan.Id, loan.ItemCopyId, _currentUser.Id);
 
             return Result.Conflict("ההשאלה עודכנה על ידי משתמש אחר. נא לנסות שוב.");

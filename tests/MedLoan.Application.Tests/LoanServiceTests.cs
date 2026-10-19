@@ -112,29 +112,29 @@ public class LoanServiceTests
     }
 
     [Fact]
-    public async Task ReturnLoan_ByOwner_Succeeds()
+    public async Task GetLoan_ByOwner_Succeeds()
     {
         var loan = ActiveLoanOf(MemberId);
 
-        var result = await _service.ReturnAsync(loan.Id, Returned(), Ct);
+        var result = await _service.GetByIdAsync(loan.Id, Ct);
 
         Assert.True(result.IsSuccess);
-        AssertReturned(loan);
+        Assert.Equal(loan.Id, result.Value!.Id);
+        Assert.Equal(MemberId, result.Value.MemberId);
     }
 
     [Fact]
-    public async Task ReturnLoan_ByOtherMember_ReturnsForbidden()
+    public async Task GetLoan_ByOtherMember_ReturnsForbidden()
     {
         var loan = ActiveLoanOf(OtherMemberId);
 
-        var result = await _service.ReturnAsync(loan.Id, Returned(), Ct);
+        var result = await _service.GetByIdAsync(loan.Id, Ct);
 
         Assert.Equal(ErrorType.Forbidden, result.Error);
-        Assert.Equal(LoanStatus.Active, loan.Status);
-        Assert.Equal(CopyStatus.Loaned, loan.ItemCopy.Status);
-        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        Assert.Null(result.Value);
     }
 
+    // Ownership is not checked on return: the endpoint is Admin only, so the service is called by an admin.
     [Fact]
     public async Task ReturnLoan_ByAdmin_Succeeds()
     {
@@ -196,11 +196,13 @@ public class LoanServiceTests
             ItemCopyId = 1,
             ItemCopy = NewCopy(CopyStatus.Loaned),
             MemberId = memberId,
+            Member = new Member { Id = memberId, FullName = "חבר בדיקה" },
             LoanedAt = _time.GetUtcNow().UtcDateTime.AddDays(-5),
             DueAt = _time.GetUtcNow().UtcDateTime.AddDays(25),
             Status = LoanStatus.Active
         };
         _loans.Setup(r => r.GetByIdForUpdateAsync(loan.Id, It.IsAny<CancellationToken>())).ReturnsAsync(loan);
+        _loans.Setup(r => r.GetByIdAsync(loan.Id, It.IsAny<CancellationToken>())).ReturnsAsync(loan);
         return loan;
     }
 
